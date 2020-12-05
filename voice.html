@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- https://jsfiddle.net/Paceaux/pEMBq/ -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>voice Commands</title>
+    <style>
+        body {
+            background: #fff;
+        }
+
+        .voiceApp,
+        .commandReference {
+            height: 10em;
+            background: #f9f9f9;
+            border-radius: 5px;
+            width: 300px;
+            margin: .25em;
+            box-shadow: 2px 2px 1px #ccc;
+
+        }
+
+        .commandReference {
+
+            /* float: right; */
+            float: left;
+            height: 200px;
+
+        }
+
+        .voiceApp {
+            float: left;
+        }
+
+        .controls {
+            display: block;
+            /* width: 100%; */
+            height: 5em;
+            /* em 會依據父層物件尺寸為基準 */
+        }
+
+        .commandReference {
+            width: 300px;
+        }
+
+        h1 {
+            font-size: 1.618em;
+            border-bottom: 2px solid #ccc;
+        }
+
+        h2 {
+            font-size: 1.1em;
+            border-bottom: 1px solid #999;
+        }
+
+        small {
+            display: block;
+            font-size: .8em;
+        }
+
+        .reference {
+            font-size: .75em;
+        }
+
+        label {
+            display: block;
+            width: 90%;
+        }
+
+        .voiceApp output {
+            display: block;
+            /* width: 90%; */
+            width: 100%;
+            min-height: 3em;
+        }
+
+        .playground {
+            border: .25em solid #ccc;
+            width: 64%;
+            clear: both;
+
+        }
+
+        #Frank {
+            width: 18em;
+            height: 5em;
+            border: 2px solid blue;
+        }
+
+        .button {
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        .button1 {
+            background-color: #4CAF50;
+        }
+
+        /* Green */
+        .button2 {
+            background-color: #008CBA;
+        }
+
+        /* Blue */
+    </style>
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+<body>
+    <!-- joey 要 fix UI 的部分, maybe RWD -->
+    <div class="voiceApp">
+        <fieldset class="controls">
+            <h1>Voice Center</h1>
+            <button class="button button1" id="start">Start</button>
+            <button class="button button2" id="stop">stop</button>
+        </fieldset>
+    </div>
+    <div class="voiceApp">
+        <label for="results" class="w3-container w3-red">Actual Results</label>
+        <output id="results"></output>
+
+        <label for="commands" class="w3-container w3-red">Commands</label>
+        <output id="commands"></output>
+    </div>
+    <!-- joey command reference -->
+    <div class="commandReference">
+        <h2>Current commands <small>(start by saying 'program')</small></h2>
+        <!-- <h2>Current commands <small>(start by saying 'joey')</small></h2> -->
+        <ul class="reference">
+            <li>stop</li>
+            <li>alert</li>
+            <li>email</li>
+            <li>hide</li>
+            <li>show</li>
+        </ul>
+    </div>
+    <!-- joey 第二區 -->
+    <div class="playground">
+        <h1>User Playground</h1>
+        <nav>
+            <a href="#">link</a>
+            <a href="#">other </a>
+        </nav>
+        <label for="yes">yes</label>
+        <input id="yes" type="radio" name="blah" value="yes" />
+        <label for="no">no</label>
+        <input type="radio" name="blah" value="no" />
+        <label for="maybe">maybe</label>
+        <input type="radio" name="blah" value="maybe" />
+        <input type="checkbox" name="blooh" />
+        <input type="checkbox" name="bloooh" />
+        <input type="text" />
+        <div id="Frank">
+            frank's div
+        </div>
+    </div>
+
+    <!-- joey 註解 減少 code to find key or bug
+    find simple sample code
+    joey want prototype program then show to vender -->
+    <script>
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("can't recognize speech")
+        } else {
+            var speech = new webkitSpeechRecognition();
+            window.speech = speech;
+            speech.final_transcript = '';
+            speech.continuous = true;
+            speech.interimResults = true;
+            speech.onstart = function () {
+                recognizing = true;
+            };
+            speech.onresult = function (e) {
+                var interim_transcript = '';
+                if (typeof (event.results) == 'undefined') {
+                    speech.onend = null;
+                    speech.stop();
+                    return;
+                }
+                for (var i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) {
+                        voiceApp.commandActivate(e.results[i][0].transcript);
+                        speech.final_transcript += e.results[i][0].transcript;
+                        $(voiceApp.results).html(speech.final_transcript);
+
+                    } else {
+                        speech.interim_transcript += e.results[i][0].transcript;
+                        var transcript = speech.interim_transcript[i][0].transcript;
+                        voiceApp.commandActivate(transcript);
+                        $(voiceApp.results).append(e.results[i][0].transcript);
+
+                    }
+
+                }
+            };
+            speech.onerror = function () {
+
+            };
+            speech.onend = function () {
+                recognizing = false;
+                alert('stopped listening');
+            };
+        };
+        window.voiceApp = {
+            start: $('#start'),
+            results: $('#results'),
+            stop: $('#stop'),
+            commandResults: $('#commands'),
+            library: {
+                programName: 'program',
+                // programName: 'joey',
+                stop: function () {
+                    speech.stop();
+                },
+                alert: function (transcript) {
+                    alert(transcript);
+                    return;
+                },
+                email: function (transcript) {
+                    var body = encodeURI($(voiceApp.results).val());
+                    window.location.href = 'mailto:?subject=voicemessage&body=' + body;
+                },
+                go: function (transcript) {
+                    var item = voiceApp.getCommandParameter('to', transcript);
+                    window.location.href = "http://" + item;
+                },
+                jump: function (transcript) {
+                    var param = voiceApp.getCommandParameter('to', transcript);
+                    $('a:contains(' + param + '), label:contains(' + param + '),button:contains(' + param + ')').focus();
+                },
+                next: function (transcript) {
+                    var param = voiceApp.getCommandParameter('next', transcript);
+                    var item = voiceApp.interpret(param);
+                    console.log(item);
+                    $(item).next().focus();
+                },
+                previous: function (transcript) {
+                    var param = voiceApp.getCommandParameter('previous', transcript);
+                    var item = voiceApp.interpret(param);
+                    console.log(item);
+                    $(item).prev().focus();
+                },
+                last: function (transcript) {
+                    var param = voiceApp.getCommandParameter('last', transcript);
+                    var item = voiceApp.interpret(param);
+                    console.log(item);
+                    $(item).prev().focus();
+                },
+                click: function (transcript) {
+                    $(document.activeElement).click();
+                },
+                check: function (transcript) {
+                    $(document.activeElement).click();
+                },
+                clear: function (transcript) {
+                    $(document.activeElement).val('');
+                },
+                hide: function (transcript) {
+                    var item = voiceApp.getCommandParameter('hide', transcript);
+                    console.log(item);
+                    var thisItem = item != "this" ? '#' + item + ',.' + item + ',:contains(' + item + ')' : document.ActiveElement;
+                    console.log(thisItem)
+                    $(thisItem).hide();
+                },
+                show: function (transcript) {
+                    var item = voiceApp.getCommandParameter('show', transcript);
+                    console.log(item);
+                    var thisItem = item != "this" ? '#' + item + ',.' + item + ',:contains(' + item + ')' : document.ActiveElement;
+                    console.log(thisItem)
+                    $(thisItem).show();
+                },
+                toggle: function (transcript) {
+                    var item = voiceApp.getCommandParameter('toggle', transcript);
+                    $('#' + item + ',.' + item).toggle();
+                }
+            },
+            interpret: function (param) {
+                var item = voiceApp.parameterLibrary[param];
+                return item;
+            },
+            parameterLibrary: {
+                field: "input, textarea",
+                input: "input",
+                link: "a",
+                button: 'button, input[type="submit"]'
+            },
+            init: function () {
+                voiceApp.bindEvents();
+            },
+            bindEvents: function () {
+                $(voiceApp.start).click(function (e) {
+                    speech.lang = "en-US";
+                    speech.start();
+                });
+                $(voiceApp.stop).click(function (e) {
+                    speech.stop();
+                });
+            },
+            commandActivate: function (transcript) {
+                var prompt = voiceApp.library.programName;
+                var commander = new RegExp('\\b' + prompt + '\\b');
+                var commandStart = transcript.search(commander);
+                if (commandStart != -1) {
+                    voiceApp.getCommand(transcript, commandStart);
+                } else {
+                    return
+                }
+            },
+            getCommand: function (transcript, commInd) {
+                var afterPrompt = commInd + voiceApp.library.programName.length + 1;
+                var theAfter = transcript.substring(afterPrompt);
+                var command = theAfter.split(' ')[0];
+                $(voiceApp.commandResults).html(command);
+                voiceApp.executeCommand(command, transcript);
+            },
+            executeCommand: function (command, transcript) {
+                voiceApp.library[command](transcript);
+            },
+            getCommandParameter: function (command, transcript) {
+                var commandInd = transcript.search(command);
+                var commandLeng = command.length;
+                var commandAfter = transcript.substring(commandLeng + commandInd);
+                var parameter = commandAfter.split(' ')[1];
+                return parameter;
+            }
+        };
+        $(function () {
+            voiceApp.init();
+        });
+
+    </script>
+
+</body>
+
+</html>
